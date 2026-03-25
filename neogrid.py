@@ -37,26 +37,24 @@ screen = pygame.display.set_mode(
 
 black = (0, 0, 0)
 current_color = (0, 255, 0)
-matrix_font_size = 36
+matrix_font_size = 24
 font_path = os.path.join("font", "MS Mincho.ttf")
-
 
 def initialize_characters():
     return [
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-        'ァ', 'ア', 'ィ', 'イ', 'ゥ', 'ウ', 'ェ', 'エ', 'ォ',
-        'オ', 'カ', 'ガ', 'キ', 'ギ', 'ク', 'グ', 'ケ', 'ゲ',
-        'コ', 'ゴ', 'サ', 'ザ', 'シ', 'ジ', 'ス', 'ズ', 'セ',
-        'ゼ', 'ソ', 'ゾ', 'タ', 'ダ', 'チ', 'ヂ', 'ッ', 'ツ',
-        'ヅ', 'テ', 'デ', 'ト', 'ド', 'ナ', 'ニ', 'ヌ', 'ネ',
-        'ノ', 'ハ', 'バ', 'パ', 'ヒ', 'ビ', 'ピ', 'フ', 'ブ',
-        'プ', 'ヘ', 'ベ', 'ペ', 'ホ', 'ボ', 'ポ', 'マ', 'ミ',
-        'ム', 'メ', 'モ', 'ャ', 'ヤ', 'ュ', 'ユ', 'ョ', 'ヨ',
-        'ラ', 'リ', 'ル', 'レ', 'ロ', 'ヮ', 'ワ', 'ヰ', 'ヱ',
-        'ヲ', 'ン', 'ヴ', 'ヵ', 'ヶ', 'ヷ', 'ヸ', 'ヹ', 'ヺ',
-        '・', 'ー', 'ヽ', 'ヾ'
+        '1','2','3','4','5','6','7','8','9','0',
+        'ァ','ア','ィ','イ','ゥ','ウ','ェ','エ','ォ',
+        'オ','カ','ガ','キ','ギ','ク','グ','ケ','ゲ',
+        'コ','ゴ','サ','ザ','シ','ジ','ス','ズ','セ',
+        'ゼ','ソ','ゾ','タ','ダ','チ','ヂ','ッ','ツ',
+        'ヅ','テ','デ','ト','ド','ナ','ニ','ヌ','ネ',
+        'ノ','ハ','バ','パ','ヒ','ビ','ピ','フ','ブ',
+        'プ','ヘ','ベ','ペ','ホ','ボ','ポ','マ','ミ',
+        'ム','メ','モ','ャ','ヤ','ュ','ユ','ョ','ヨ',
+        'ラ','リ','ル','レ','ロ','ヮ','ワ','ヰ','ヱ',
+        'ヲ','ン','ヴ','ヵ','ヶ','ヷ','ヸ','ヹ','ヺ',
+        '・','ー','ヽ','ヾ'
     ]
-
 
 class Matorikkusu:
     def __init__(self, x, y, color):
@@ -65,59 +63,52 @@ class Matorikkusu:
         self.color = color
         self.chars = initialize_characters()
         self.char_size = matrix_font_size
-        self.line_length = random.randint(14, 26)
+        self.line_length = random.randint(10, 20)
         self.line = [random.choice(self.chars) for _ in range(self.line_length)]
-        self.vertical_step = 10
-        self.alpha = 255
-        self.trail_length = 4
+        self.vertical_step = random.randint(5, 25)
+        self.trail_length = random.randint(3, 6)
         self.trail = []
 
     def draw(self, screen):
-        if self.y < screen_height:
-            self.y += self.vertical_step * (self.line_length / 20)
-            distance_to_bottom = screen_height - self.y
-            fade_range = 200
-            if distance_to_bottom < fade_range:
-                self.alpha = int((distance_to_bottom / fade_range) * 255)
+        char_font = pygame.font.Font(font_path, self.char_size)
+        if self.y < screen_height + self.line_length * self.char_size:
+            self.y += self.vertical_step
             self.trail.append((self.x, self.y))
             if len(self.trail) > self.trail_length:
                 self.trail.pop(0)
             for i in range(self.line_length):
                 if random.random() < 0.08:
                     self.line[i] = random.choice(self.chars)
+
+            for i, char in enumerate(self.line):
+                flicker_alpha = random.randint(180, 255)
+                char_surface = char_font.render(char, True, self.color)
+                char_surface.set_alpha(flicker_alpha)
+                screen.blit(char_surface, (self.x, self.y + i * self.char_size))
+
+                for j, trail_pos in enumerate(reversed(self.trail)):
+                    trail_color = (
+                        max(0, self.color[0] - j * 20),
+                        max(0, self.color[1] - j * 20),
+                        max(0, self.color[2] - j * 20)
+                    )
+                    trail_alpha = int((1 - j / self.trail_length) * flicker_alpha)
+                    trail_surface = char_font.render(char, True, trail_color)
+                    trail_surface.set_alpha(trail_alpha)
+                    screen.blit(trail_surface, (trail_pos[0], trail_pos[1] + i * self.char_size))
         else:
-            self.y = -40 * random.randrange(1, 5)
-            self.alpha = 255
+            self.y = -self.line_length * self.char_size * random.randint(1, 5)
+            self.vertical_step = random.randint(5, 25)
             self.trail = []
-
-        char_font = pygame.font.Font(font_path, self.char_size)
-
-        for i, char in enumerate(self.line):
-            flicker_alpha = random.randint(180, 255)
-            fade_distance = screen_height - self.y - i * 30
-            fade_distance = max(0, fade_distance)
-            fade_alpha = int((1 - fade_distance / screen_height) * self.alpha)
-            final_alpha = min(fade_alpha, flicker_alpha)
-
-            char_surface = char_font.render(char, True, self.color)
-            char_surface.set_alpha(final_alpha)
-            screen.blit(char_surface, (self.x, self.y + i * 36))
-
-            for j, trail_pos in enumerate(reversed(self.trail)):
-                trail_alpha = int((1 - j / self.trail_length) * final_alpha)
-                trail_surface = char_font.render(char, True, self.color)
-                trail_surface.set_alpha(trail_alpha)
-                screen.blit(trail_surface, (trail_pos[0], trail_pos[1] + i * 36))
 
     def set_color(self, color):
         self.color = color
 
     def decrease_speed(self):
-        self.vertical_step = max(self.vertical_step - 5, 5)
+        self.vertical_step = max(2, self.vertical_step - 2)
 
     def increase_speed(self):
-        self.vertical_step = min(self.vertical_step + 5, 100)
-
+        self.vertical_step = min(100, self.vertical_step + 2)
 
 def change_color(key):
     colors = {
@@ -137,10 +128,8 @@ def change_color(key):
     }
     return colors.get(key)
 
-
 def main():
-    window = screen
-    screen_width = window.get_width()
+    global current_color
 
     try:
         pygame.mixer.init()
@@ -151,13 +140,15 @@ def main():
 
     matrix_symbols = [
         Matorikkusu(x, random.randint(0, screen_height), current_color)
-        for x in range(0, screen_width, matrix_font_size)
+        for x in range(0, screen_width, matrix_font_size // 1)
     ]
 
     clock = pygame.time.Clock()
     running = True
 
     while running:
+        screen.fill(black)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -165,28 +156,32 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_LEFT:
-                    for s in matrix_symbols:
-                        s.decrease_speed()
+                    for s in matrix_symbols: s.decrease_speed()
                 elif event.key == pygame.K_RIGHT:
+                    for s in matrix_symbols: s.increase_speed()
+                elif event.key == pygame.K_UP:
+                    for s in matrix_symbols: s.trail_length += 1
+                elif event.key == pygame.K_DOWN:
+                    for s in matrix_symbols: s.trail_length = max(1, s.trail_length - 1)
+                elif event.key == pygame.K_SPACE:
                     for s in matrix_symbols:
-                        s.increase_speed()
+                        s.set_color((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
+                elif event.key == pygame.K_r:
+                    for s in matrix_symbols: s.y = random.randint(-100, screen_height)
                 else:
                     color = change_color(event.key)
                     if color:
-                        global current_color
                         current_color = color
                         for s in matrix_symbols:
                             s.set_color(current_color)
 
-        window.fill(black)
         for symbol in matrix_symbols:
-            symbol.draw(window)
+            symbol.draw(screen)
 
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
-
 
 if __name__ == "__main__":
     main()
